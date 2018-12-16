@@ -1,7 +1,5 @@
 package mindbadger.football.web.reader.util;
 
-import mindbadger.football.tobedeleted.FootballResultsReaderException;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -20,7 +18,7 @@ public class StringToCalendarConverter {
 			cal.setTime(sdf.parse(dateString));
 			return cal;
 		} catch (ParseException e) {
-			throw new FootballResultsReaderException(e);
+			throw new IllegalArgumentException(e);
 		}
 	}
 	
