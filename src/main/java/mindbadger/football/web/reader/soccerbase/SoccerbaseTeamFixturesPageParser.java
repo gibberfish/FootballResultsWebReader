@@ -29,7 +29,8 @@ public class SoccerbaseTeamFixturesPageParser implements TeamFixturesPageParser 
     private String dialect;
 
     @Override
-    public List<ParsedFixture> getFixturesFromTeamFixturesPage(Integer seasonNumber, String sourceTeamId, List<String> divisionsToInclude) {
+    public List<ParsedFixture> getFixturesFromTeamFixturesPage(Integer seasonNumber, String sourceTeamId, List<String> divisionsToInclude)
+        throws IOException {
         LOG.info("[[ getFixturesFromTeamFixturesPage for season " + seasonNumber + " and team id " + sourceTeamId + "]]");
 
         List<ParsedFixture> parsedFixtures = new ArrayList<>();
@@ -44,28 +45,23 @@ public class SoccerbaseTeamFixturesPageParser implements TeamFixturesPageParser 
         String url = this.url.replace("{seasonNum}", soccerbaseSeasonNumber.toString());
         url = url.replace("{teamId}", sourceTeamId);
 
-        try {
-            Document pageDocument = Jsoup.connect(url).get();
+        Document pageDocument = Jsoup.connect(url).get();
 
-            Elements tableRows = parseTableRowsFromPage(pageDocument);
+        Elements tableRows = parseTableRowsFromPage(pageDocument);
 
-            for (Element tableRow : tableRows) {
-                ParsedFixture newParsedFixture = new ParsedFixture();
-                parseDivisionFromFixture(tableRow, newParsedFixture);
+        for (Element tableRow : tableRows) {
+            ParsedFixture newParsedFixture = new ParsedFixture();
+            parseDivisionFromFixture(tableRow, newParsedFixture);
 
-                if (divisionsToInclude.contains(newParsedFixture.getDivisionId())) {
-                    newParsedFixture.setSeasonId(seasonNumber);
-                    parseDateFromFixture(tableRow, newParsedFixture);
-                    parseHomeTeamFromFixture(tableRow, newParsedFixture);
-                    parseAwayTeamFromFixture(tableRow, newParsedFixture);
-                    parseScoreFromFixture(tableRow, newParsedFixture);
+            if (divisionsToInclude.contains(newParsedFixture.getDivisionId())) {
+                newParsedFixture.setSeasonId(seasonNumber);
+                parseDateFromFixture(tableRow, newParsedFixture);
+                parseHomeTeamFromFixture(tableRow, newParsedFixture);
+                parseAwayTeamFromFixture(tableRow, newParsedFixture);
+                parseScoreFromFixture(tableRow, newParsedFixture);
 
-                    parsedFixtures.add(newParsedFixture);
-                }
+                parsedFixtures.add(newParsedFixture);
             }
-
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
         return parsedFixtures;

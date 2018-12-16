@@ -29,7 +29,8 @@ public class SoccerbaseFixtureDatePageParser implements FixtureDatePageParser {
     private String dialect;
 
     @Override
-    public List<ParsedFixture> getFixturesFromDatePage(Calendar date, List<String> divisionsToInclude) {
+    public List<ParsedFixture> getFixturesFromDatePage(Calendar date, List<String> divisionsToInclude)
+        throws IOException {
         LOG.info("[[ getFixturesFromDatePage for date " + StringToCalendarConverter.convertCalendarToDateString(date) +
                 " and divisions: " + divisionsToInclude + "]]");
 
@@ -41,45 +42,38 @@ public class SoccerbaseFixtureDatePageParser implements FixtureDatePageParser {
         String currentDivisionName = null;
         boolean ignoreDivision = true;
 
-        try {
-            Document pageDocument = Jsoup.connect(url).get();
+        Document pageDocument = Jsoup.connect(url).get();
 
-            Elements tableRows = parseTableRowsFromPage(pageDocument);
+        Elements tableRows = parseTableRowsFromPage(pageDocument);
 
-            for (Element tableRow : tableRows) {
-                Elements divisionNodes = tableRow.select("[href^='/tournaments/tournament.sd?comp_id=']");
+        for (Element tableRow : tableRows) {
+            Elements divisionNodes = tableRow.select("[href^='/tournaments/tournament.sd?comp_id=']");
 
-                if (divisionNodes.size() == 1) {
-                    Element divisionNode = divisionNodes.get(0);
+            if (divisionNodes.size() == 1) {
+                Element divisionNode = divisionNodes.get(0);
 
-                    String[] split = divisionNode.attr("href").split("comp_id=");
-                    if (divisionsToInclude.contains(split[1])) {
-                        currentDivisionId = split[1];
-                        currentDivisionName = divisionNode.text();
-                        ignoreDivision = false;
-                    } else {
-                        ignoreDivision = true;
-                    }
-                }
-
-                if (!ignoreDivision && "match".equals(tableRow.className())) {
-                    LOG.info("... got match for " + currentDivisionId);
-
-                    ParsedFixture newParsedFixture = new ParsedFixture();
-                    newParsedFixture.setDivisionId(currentDivisionId);
-                    newParsedFixture.setDivisionName(currentDivisionName);
-
-                    parseDateFromFixture (tableRow, newParsedFixture);
-                    parseHomeTeamFromFixture (tableRow, newParsedFixture);
-                    parseAwayTeamFromFixture (tableRow, newParsedFixture);
-                    parseScoreFromFixture (tableRow, newParsedFixture);
-
-                    parsedFixtures.add(newParsedFixture);
+                String[] split = divisionNode.attr("href").split("comp_id=");
+                if (divisionsToInclude.contains(split[1])) {
+                    currentDivisionId = split[1];
+                    currentDivisionName = divisionNode.text();
+                    ignoreDivision = false;
+                } else {
+                    ignoreDivision = true;
                 }
             }
-        } catch (IOException e) {
-            //TODO Handle Read time-out - return 408
-            e.printStackTrace();
+
+            if (!ignoreDivision && "match".equals(tableRow.className())) {
+                ParsedFixture newParsedFixture = new ParsedFixture();
+                newParsedFixture.setDivisionId(currentDivisionId);
+                newParsedFixture.setDivisionName(currentDivisionName);
+
+                parseDateFromFixture (tableRow, newParsedFixture);
+                parseHomeTeamFromFixture (tableRow, newParsedFixture);
+                parseAwayTeamFromFixture (tableRow, newParsedFixture);
+                parseScoreFromFixture (tableRow, newParsedFixture);
+
+                parsedFixtures.add(newParsedFixture);
+            }
         }
 
         return parsedFixtures;
